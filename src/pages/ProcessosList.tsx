@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { JURISDICAO_LABELS } from '@/types/process';
-import type { Jurisdicao, Relevancia } from '@/types/process';
+import type { Jurisdicao, Processo } from '@/types/process';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, ChevronDown, ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,25 +16,35 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ProcessFormDialog } from '@/components/ProcessFormDialog';
+import { cn } from '@/lib/utils';
 
-const ProcessosList = () => {
-  const { processos, clientes } = useApp();
-  const [search, setSearch] = useState('');
-  const [filterJurisdicao, setFilterJurisdicao] = useState<string>('all');
-  const [filterRelevancia, setFilterRelevancia] = useState<string>('all');
-  const [filterCliente, setFilterCliente] = useState<string>('all');
-  const [showForm, setShowForm] = useState(false);
+const ESTADO_NOME: Record<string, string> = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia',
+  CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás',
+  MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais',
+  PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí',
+  RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul',
+  RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo',
+  SE: 'Sergipe', TO: 'Tocantins',
+};
 
-  const filtered = processos.filter(p => {
-    const matchSearch =
-      p.titulo.toLowerCase().includes(search.toLowerCase()) ||
-      p.numero.toLowerCase().includes(search.toLowerCase());
-    const matchJurisdicao = filterJurisdicao === 'all' || p.jurisdicao === filterJurisdicao;
-    const matchRelevancia = filterRelevancia === 'all' || p.relevancia === filterRelevancia;
-    const matchCliente = filterCliente === 'all' || p.clienteId === filterCliente;
-    return matchSearch && matchJurisdicao && matchRelevancia && matchCliente;
-  });
+function groupByEstado(processos: Processo[]): Record<string, Processo[]> {
+  const groups: Record<string, Processo[]> = {};
+  for (const p of processos) {
+    const uf = p.estado || 'Outros';
+    if (!groups[uf]) groups[uf] = [];
+    groups[uf].push(p);
+  }
+  // Sort by state name
+  const sorted: Record<string, Processo[]> = {};
+  Object.keys(groups)
+    .sort((a, b) => (ESTADO_NOME[a] || a).localeCompare(ESTADO_NOME[b] || b))
+    .forEach(k => { sorted[k] = groups[k]; });
+  return sorted;
+}
 
+function EstadoGroup({ uf, processos, clientes }: { uf: string; processos: Processo[]; clientes: { id: string; nome: string }[] }) {
+  const [open, setOpen] = useState(true);
   const getClienteNome = (id: string) => clientes.find(c => c.id === id)?.nome || 'Sem cliente';
 
   const jurisdicaoColor: Record<Jurisdicao, string> = {
@@ -43,6 +53,71 @@ const ProcessosList = () => {
     trabalhista: 'bg-warning text-warning-foreground',
     administrativo: 'bg-purple-600 text-primary-foreground',
   };
+
+  return (
+    <div className="space-y-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+      >
+        {open ? <FolderOpen className="h-4 w-4 text-accent" /> : <Folder className="h-4 w-4 text-muted-foreground" />}
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        <span>{ESTADO_NOME[uf] || uf}</span>
+        <Badge variant="secondary" className="ml-auto text-xs">{processos.length}</Badge>
+      </button>
+      {open && (
+        <div className="ml-4 space-y-2 border-l-2 border-border pl-4">
+          {processos.map(p => (
+            <Link key={p.id} to={`/processos/${p.id}`}>
+              <Card className="transition-all hover:shadow-md hover:border-accent/30 cursor-pointer">
+                <CardContent className="flex items-center justify-between gap-3 p-3">
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p className="text-sm font-medium truncate">{p.titulo}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                      <span>{p.numero}</span>
+                      <span>•</span>
+                      <span>{getClienteNome(p.clienteId)}</span>
+                    </div>
+                    {p.ultimaMovimentacao && (
+                      <p className="text-xs text-muted-foreground truncate">Últ. mov.: {p.ultimaMovimentacao}</p>
+                    )}
+                  </div>
+                  <Badge className={cn('shrink-0 text-xs', jurisdicaoColor[p.jurisdicao])}>
+                    {JURISDICAO_LABELS[p.jurisdicao]}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const ProcessosList = () => {
+  const { processos, clientes } = useApp();
+  const [search, setSearch] = useState('');
+  const [filterJurisdicao, setFilterJurisdicao] = useState<string>('all');
+  const [filterCliente, setFilterCliente] = useState<string>('all');
+  const [showForm, setShowForm] = useState(false);
+
+  const filtered = processos.filter(p => {
+    const matchSearch =
+      p.titulo.toLowerCase().includes(search.toLowerCase()) ||
+      p.numero.toLowerCase().includes(search.toLowerCase());
+    const matchJurisdicao = filterJurisdicao === 'all' || p.jurisdicao === filterJurisdicao;
+    const matchCliente = filterCliente === 'all' || p.clienteId === filterCliente;
+    return matchSearch && matchJurisdicao && matchCliente;
+  });
+
+  const relevantes = filtered.filter(p => p.relevancia === 'relevante');
+  const normais = filtered.filter(p => p.relevancia === 'normal');
+
+  const relevantesEstado = groupByEstado(relevantes);
+  const normaisEstado = groupByEstado(normais);
+
+  const clientesList = clientes.map(c => ({ id: c.id, nome: c.nome }));
 
   return (
     <div className="space-y-6">
@@ -80,16 +155,6 @@ const ProcessosList = () => {
             <SelectItem value="administrativo">Proc. Administrativo</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterRelevancia} onValueChange={setFilterRelevancia}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Relevância" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="relevante">Relevantes</SelectItem>
-            <SelectItem value="normal">Normal</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={filterCliente} onValueChange={setFilterCliente}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Cliente" />
@@ -103,52 +168,44 @@ const ProcessosList = () => {
         </Select>
       </div>
 
-      {/* List */}
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Filter className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <p className="text-muted-foreground">Nenhum processo encontrado.</p>
-            <Button variant="link" onClick={() => setShowForm(true)} className="mt-2 text-accent">
-              Cadastrar novo processo
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Two columns: Relevantes | Normal */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Relevantes */}
         <div className="space-y-3">
-          {filtered.map(p => (
-            <Link key={p.id} to={`/processos/${p.id}`}>
-              <Card className="transition-all hover:shadow-md hover:border-accent/30 cursor-pointer">
-                <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold truncate">{p.titulo}</h3>
-                      <Badge variant={p.relevancia === 'relevante' ? 'destructive' : 'secondary'}>
-                        {p.relevancia === 'relevante' ? '⚡ Relevante' : 'Normal'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
-                      <span>{p.numero}</span>
-                      <span>•</span>
-                      <span>{getClienteNome(p.clienteId)}</span>
-                      <span>•</span>
-                      <span>{p.estado}</span>
-                    </div>
-                    {p.ultimaMovimentacao && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        Última mov.: {p.ultimaMovimentacao}
-                      </p>
-                    )}
-                  </div>
-                  <Badge className={jurisdicaoColor[p.jurisdicao]}>
-                    {JURISDICAO_LABELS[p.jurisdicao]}
-                  </Badge>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-4 py-3">
+            <span className="text-lg">⚡</span>
+            <h2 className="font-display text-lg font-bold">Mais Relevantes</h2>
+            <Badge variant="destructive" className="ml-auto">{relevantes.length}</Badge>
+          </div>
+          {Object.keys(relevantesEstado).length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhum processo relevante.</p>
+          ) : (
+            <div className="space-y-2">
+              {Object.entries(relevantesEstado).map(([uf, procs]) => (
+                <EstadoGroup key={uf} uf={uf} processos={procs} clientes={clientesList} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Normal */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-lg bg-info/10 px-4 py-3">
+            <span className="text-lg">📁</span>
+            <h2 className="font-display text-lg font-bold">Acompanhamento Normal</h2>
+            <Badge className="ml-auto bg-info text-info-foreground">{normais.length}</Badge>
+          </div>
+          {Object.keys(normaisEstado).length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Nenhum processo normal.</p>
+          ) : (
+            <div className="space-y-2">
+              {Object.entries(normaisEstado).map(([uf, procs]) => (
+                <EstadoGroup key={uf} uf={uf} processos={procs} clientes={clientesList} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       <ProcessFormDialog open={showForm} onOpenChange={setShowForm} />
     </div>
