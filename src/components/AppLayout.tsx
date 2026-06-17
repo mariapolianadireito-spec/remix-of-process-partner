@@ -4,10 +4,12 @@ import {
   Scale,
   Users,
   Menu,
-  X,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { title: 'Painel', url: '/', icon: LayoutDashboard },
@@ -17,7 +19,9 @@ const navItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const displayName = (user?.user_metadata?.nome_exibicao as string) || user?.email || '';
 
   return (
     <div className="flex min-h-screen w-full">
@@ -83,6 +87,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
+          {user && (
+            <div className="flex items-center gap-3">
+              <span className="hidden text-sm text-muted-foreground sm:inline">{displayName}</span>
+              <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sair</span>
+              </Button>
+            </div>
+          )}
         </header>
 
         <main className="flex-1 p-6 animate-fade-in">
