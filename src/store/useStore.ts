@@ -124,7 +124,7 @@ export function useProcessos() {
   const updateMut = useMutation({
     mutationFn: async (p: Processo) => {
       const { id, ...rest } = processoToRow(p);
-      const { error } = await supabase.from('processos').update(rest).eq('id', id);
+      const { error } = await supabase.from('processos').update(rest as never).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
