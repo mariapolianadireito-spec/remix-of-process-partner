@@ -14,16 +14,185 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string | null
+          documento: string | null
+          email: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string | null
+          documento?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string | null
+          documento?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+        }
+        Relationships: []
+      }
+      processos: {
+        Row: {
+          atualizado_em: string
+          cliente_id: string | null
+          contato_vara: string | null
+          criado_em: string
+          criado_por: string | null
+          data_ultima_consulta: string | null
+          data_ultima_movimentacao: string | null
+          estado: string
+          forma_acesso: string | null
+          id: string
+          jurisdicao: string
+          movimentacoes: Json
+          numero: string
+          observacoes: string | null
+          pecas: Json
+          relevancia: string
+          senha_acesso: string | null
+          telefone_vara: string | null
+          titulo: string
+          ultima_movimentacao: string | null
+          url_acesso: string | null
+          vara: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          contato_vara?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_ultima_consulta?: string | null
+          data_ultima_movimentacao?: string | null
+          estado?: string
+          forma_acesso?: string | null
+          id?: string
+          jurisdicao?: string
+          movimentacoes?: Json
+          numero: string
+          observacoes?: string | null
+          pecas?: Json
+          relevancia?: string
+          senha_acesso?: string | null
+          telefone_vara?: string | null
+          titulo: string
+          ultima_movimentacao?: string | null
+          url_acesso?: string | null
+          vara?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          contato_vara?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          data_ultima_consulta?: string | null
+          data_ultima_movimentacao?: string | null
+          estado?: string
+          forma_acesso?: string | null
+          id?: string
+          jurisdicao?: string
+          movimentacoes?: Json
+          numero?: string
+          observacoes?: string | null
+          pecas?: Json
+          relevancia?: string
+          senha_acesso?: string | null
+          telefone_vara?: string | null
+          titulo?: string
+          ultima_movimentacao?: string | null
+          url_acesso?: string | null
+          vara?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          id: string
+          nome_exibicao: string | null
+          oab: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          id: string
+          nome_exibicao?: string | null
+          oab?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nome_exibicao?: string | null
+          oab?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          criado_em: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "membro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +319,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "membro"],
+    },
   },
 } as const
