@@ -106,7 +106,7 @@ export function useProcessos() {
         .select('*')
         .order('atualizado_em', { ascending: false });
       if (error) throw error;
-      return (data as ProcessoRow[]).map(rowToProcesso);
+      return (data as unknown as ProcessoRow[]).map(rowToProcesso);
     },
   });
 
@@ -114,7 +114,7 @@ export function useProcessos() {
 
   const addMut = useMutation({
     mutationFn: async (p: Processo) => {
-      const { error } = await supabase.from('processos').insert(processoToRow(p));
+      const { error } = await supabase.from('processos').insert(processoToRow(p) as never);
       if (error) throw error;
     },
     onSuccess: () => { invalidate(); toast.success('Processo cadastrado'); },
