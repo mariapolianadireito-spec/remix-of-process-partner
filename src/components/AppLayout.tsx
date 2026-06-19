@@ -37,14 +37,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sidebar-primary font-display text-base font-bold text-sidebar-primary-foreground">
-            P&amp;L
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-display text-sm font-semibold leading-tight">Pithan &amp; Loubet</p>
-            <p className="truncate text-[11px] text-sidebar-foreground/60">Gestão Processual</p>
-          </div>
+        <div className="border-b border-sidebar-border px-5 py-4">
+          <p className="truncate font-display text-base font-semibold leading-tight">Pithan &amp; Loubet</p>
+          <p className="truncate text-[11px] text-sidebar-foreground/60">Gestão Processual</p>
         </div>
 
         <SidebarSearch onNavigate={() => setSidebarOpen(false)} />
