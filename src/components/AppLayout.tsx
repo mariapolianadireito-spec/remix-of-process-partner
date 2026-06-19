@@ -1,15 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Scale,
-  Users,
-  Menu,
-  LogOut,
-} from 'lucide-react';
+import { LayoutDashboard, Scale, Users, Menu, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { SidebarSearch } from '@/components/SidebarSearch';
 
 const navItems = [
   { title: 'Painel', url: '/', icon: LayoutDashboard },
@@ -22,10 +19,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const displayName = (user?.user_metadata?.nome_exibicao as string) || user?.email || '';
+  const hoje = format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const hojeCapitalized = hoje.charAt(0).toUpperCase() + hoje.slice(1);
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-foreground/50 lg:hidden"
@@ -33,23 +31,27 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
-          <Scale className="h-7 w-7 text-sidebar-primary" />
-          <span className="font-display text-xl font-bold text-sidebar-primary">
-            JurisPro
-          </span>
+        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-sidebar-primary font-display text-base font-bold text-sidebar-primary-foreground">
+            P&amp;L
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-display text-sm font-semibold leading-tight">Pithan &amp; Loubet</p>
+            <p className="truncate text-[11px] text-sidebar-foreground/60">Gestão Processual</p>
+          </div>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <SidebarSearch onNavigate={() => setSidebarOpen(false)} />
+
+        <nav className="flex-1 space-y-1 px-3 py-2">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.url || 
+            const isActive = location.pathname === item.url ||
               (item.url !== '/' && location.pathname.startsWith(item.url));
             return (
               <Link
@@ -60,7 +62,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-sidebar-accent text-sidebar-primary'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -70,37 +72,38 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="border-t border-sidebar-border px-6 py-4">
-          <p className="text-xs text-sidebar-foreground/50">
-            Sistema de Gestão Processual
+        <div className="border-t border-sidebar-border px-5 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/50">
+            Sistema interno
           </p>
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card px-6">
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-4 border-b bg-card px-6">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="rounded-md p-2 text-muted-foreground hover:bg-muted lg:hidden"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted lg:hidden"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           </button>
           <div className="flex-1" />
-          {user && (
-            <div className="flex items-center gap-3">
-              <span className="hidden text-sm text-muted-foreground sm:inline">{displayName}</span>
-              <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-4 text-xs">
+            <span className="hidden text-muted-foreground md:inline">{hojeCapitalized}</span>
+            {user && (
+              <>
+                <span className="hidden h-3 w-px bg-border md:inline-block" />
+                <span className="text-foreground/80">{displayName}</span>
+                <Button variant="ghost" size="sm" onClick={signOut} className="h-7 gap-1.5 px-2 text-xs">
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </>
+            )}
+          </div>
         </header>
 
-        <main className="flex-1 p-6 animate-fade-in">
-          {children}
-        </main>
+        <main className="flex-1 p-6 animate-fade-in">{children}</main>
       </div>
     </div>
   );

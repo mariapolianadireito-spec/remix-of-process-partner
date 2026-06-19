@@ -72,6 +72,14 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        priority: {
+          DEFAULT: "hsl(var(--priority))",
+          foreground: "hsl(var(--priority-foreground))",
+        },
+        normal: {
+          DEFAULT: "hsl(var(--normal))",
+          foreground: "hsl(var(--normal-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
